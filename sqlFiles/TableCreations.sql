@@ -1,14 +1,15 @@
 Create table Ingredient
 ( Id serial primary key,
   Name varchar(45) default 'unknown',
-  Price money
+  Price numeric(100, 2),
+  Info text default '-'
 );
 
 Create table Product
 ( Id serial primary key,
   Name varchar(45) default 'unknown',
-  Info text,
-  Price money
+  Info text  default '-',
+  Price numeric(100, 2)
 );
 
 Create table ProductHasIngr
@@ -20,9 +21,10 @@ Create table ProductHasIngr
   Foreign key (IdIngredient) references Ingredient(Id) on delete cascade
 );
 
+
 Create table Customer
 ( Id serial primary key,
-  Name varchar(45) default 'unknown',
+  Name varchar(45) UNIQUE default 'unknown',
   Phone varchar(20),
  
  Constraint CustomerPhone check( Phone Similar to '[0-9]{11}' or Phone Similar to '\+[0-9]\([0-9]{3}\)[0-9]{3}-[0-9]{2}-[0-9]{2}')
@@ -36,7 +38,7 @@ Create table Orders
   Name varchar(45) default 'unknown',
   Date date,
   Status OrderStatus,
-  Price money,
+  Price numeric(100, 2),
   
   Foreign key (IdCustomer) references Customer(Id) on delete cascade
 );
