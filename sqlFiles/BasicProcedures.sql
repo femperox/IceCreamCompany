@@ -67,3 +67,24 @@ LANGUAGE sql
 as $$
  delete from Customer where CusId = id;
 $$;
+
+Create or Replace Procedure PHIInsertUpdate(IngId int, ProdId int) as $$
+begin
+		
+	if exists(select idProduct, idIngredient from producthasingr where (ProdId = producthasingr.idproduct and IngId = producthasingr.idingredient)) then 
+		update producthasingr 
+		  set ingamount = ingamount + 1
+		where (prodid = idProduct and IngId = idIngredient);
+	else 
+	   insert into producthasingr values (ProdId, IngId, 1);
+	end if;
+end;
+$$ Language plpgsql; 
+
+
+call PHIInsertUpdate(1,1);
+call PHIInsertUpdate(1,2);
+
+select * from producthasingr
+select * from product
+

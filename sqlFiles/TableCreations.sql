@@ -9,8 +9,8 @@ Create table Ingredient
 Create table Product
 ( Id serial primary key,
   Name varchar(45) UNIQUE default 'unknown',
-  Info text  default '-',
-  Price numeric(100, 2) default 0
+  Price numeric(100, 2) default 0,
+  Info text  default '-'
 );
 
 Create table ProductHasIngr
