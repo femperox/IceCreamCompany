@@ -1,15 +1,16 @@
+
 Create table Ingredient
 ( Id serial primary key,
-  Name varchar(45) default 'unknown',
+  Name varchar(45) UNIQUE default 'unknown',
   Price numeric(100, 2),
   Info text default '-'
 );
 
 Create table Product
 ( Id serial primary key,
-  Name varchar(45) default 'unknown',
+  Name varchar(45) UNIQUE default 'unknown',
   Info text  default '-',
-  Price numeric(100, 2)
+  Price numeric(100, 2) default 0
 );
 
 Create table ProductHasIngr
@@ -38,7 +39,7 @@ Create table Orders
   Name varchar(45) default 'unknown',
   Date date,
   Status OrderStatus,
-  Price numeric(100, 2),
+  Price numeric(100, 2) default 0,
   
   Foreign key (IdCustomer) references Customer(Id) on delete cascade
 );
