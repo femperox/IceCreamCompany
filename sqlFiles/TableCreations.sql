@@ -25,9 +25,8 @@ Create table Customer
   Name varchar(45) default 'unknown',
   Phone varchar(20),
  
- Constraint CustomerPhone check( Phone like '+[0-9]_(___)___-__-__' or Phone like '[0-9]___________' );
-)
-
+ Constraint CustomerPhone check( Phone Similar to '[0-9]{11}' or Phone Similar to '\+[0-9]\([0-9]{3}\)[0-9]{3}-[0-9]{2}-[0-9]{2}')
+);
 
 Create type OrderStatus as enum('ready', 'complete', 'shipped', 'returned to warehouse', 'shipment cancellation');
 
@@ -40,4 +39,14 @@ Create table Orders
   Price money,
   
   Foreign key (IdCustomer) references Customer(Id) on delete cascade
+);
+
+Create table OrdersHaveProduct
+( IdOrder integer,
+  IdProduct integer,
+  ProductAmount integer,
+ 
+  Foreign key (idProduct) references Product(Id) on delete cascade,
+  Foreign key (IdOrder) references Orders(Id) on delete cascade
+ 
 );
