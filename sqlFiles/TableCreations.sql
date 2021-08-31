@@ -31,14 +31,13 @@ Create table Customer
  Constraint CustomerPhone check( Phone Similar to '[0-9]{11}' or Phone Similar to '\+[0-9]\([0-9]{3}\)[0-9]{3}-[0-9]{2}-[0-9]{2}')
 );
 
-Create type OrderStatus as enum('ready', 'complete', 'shipped', 'returned to warehouse', 'shipment cancellation');
+Create type OrderStatus as enum('not in stock', 'in stock', 'shipped', 'returned to warehouse', 'shipment cancellation');
 
 Create table Orders
 ( Id serial primary key,
   IdCustomer integer,
-  Name varchar(45) default 'unknown',
-  Date date,
-  Status OrderStatus,
+  Date date default NOW(),
+  Status OrderStatus default 'not in stock',
   Price numeric(100, 2) default 0,
   
   Foreign key (IdCustomer) references Customer(Id) on delete cascade
