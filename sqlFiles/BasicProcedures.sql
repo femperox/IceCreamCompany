@@ -87,15 +87,16 @@ as $$
  delete from producthasingr where (prodid = idProduct and IngId = idIngredient);
 $$;
 
-Create or Replace Procedure OHPInsertUpdate(OrdId int, ProdId int) as $$
+
+Create or Replace Procedure OHPInsertUpdate(OrdId int, ProdId int, amount int default 1) as $$
 begin
 		
 	if exists(select idProduct, idOrder from ordershaveproduct where (ProdId = ordershaveproduct.idproduct and OrdId = ordershaveproduct.idorder)) then 
 		update ordershaveproduct 
-		  set productamount = productamount + 1
+		  set productamount = productamount + amount
 		where (ProdId = idProduct and OrdId = idOrder);
 	else 
-	   insert into ordershaveproduct values (OrdId,ProdId, 1);
+	   insert into ordershaveproduct values (OrdId,ProdId, amount);
 	end if;
 end;
 $$ Language plpgsql; 
@@ -106,8 +107,27 @@ as $$
  delete from ordershaveproduct where (ProdId = ordershaveproduct.idproduct and OrdId = ordershaveproduct.idorder);
 $$;
 
-call PHIInsertUpdate(1,1);
-call PHIInsertUpdate(1,2);
 
-call OHPInsertUpdate(5, 1)
+Create or Replace Procedure OrderInsert(CusId int, Orddate date default now(), Ordstatus orderstatus default 'not in stock') as $$
+begin
+		insert into Orders(idCustomer, date, status) values(CusId, Orddate, Ordstatus);
+
+end;
+$$ Language plpgsql; 
+
+Create or Replace Procedure OrderUpdate(CusId int, Orddate date default now(), Ordstatus orderstatus default 'not in stock') as $$
+begin
+		update orders set 
+		  date = Orddate,
+		  status = orderstatus
+		where CusId = id;
+
+end;
+$$ Language plpgsql; 
+
+Create or Replace Procedure OrdersDelete(OrdId int)
+LANGUAGE sql
+as $$
+ delete from Orders where OrdId = id;
+$$;
 
