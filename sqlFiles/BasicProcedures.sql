@@ -81,10 +81,40 @@ begin
 end;
 $$ Language plpgsql; 
 
+Create or Replace Procedure PHIDelete(IngId int, ProdId int)
+LANGUAGE sql
+as $$
+ delete from producthasingr where (prodid = idProduct and IngId = idIngredient);
+$$;
+
+Create or Replace Procedure OHPInsertUpdate(OrdId int, ProdId int) as $$
+begin
+		
+	if exists(select idProduct, idOrder from ordershaveproduct where (ProdId = ordershaveproduct.idproduct and OrdId = ordershaveproduct.idorder)) then 
+		update ordershaveproduct 
+		  set productamount = productamount + 1
+		where (ProdId = idProduct and OrdId = idOrder);
+	else 
+	   insert into ordershaveproduct values (ProdId, IngId, 1);
+	end if;
+end;
+$$ Language plpgsql; 
+
+Create or Replace Procedure OHPDelete(ProdId int, OrdId int)
+LANGUAGE sql
+as $$
+ delete from ordershaveproduct where (ProdId = ordershaveproduct.idproduct and OrdId = ordershaveproduct.idorder);
+$$;
 
 call PHIInsertUpdate(1,1);
 call PHIInsertUpdate(1,2);
 
+call OHPInsertUpdate(1, 1)
+
 select * from producthasingr
 select * from product
 
+select * from ordershaveproduct
+select * from orders
+
+delete from orders

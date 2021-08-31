@@ -19,3 +19,6 @@ insert into product(Name, Info) values
 ('Фруктовый лёд', 'Относительно твёрдое мороженое на палочке на основе сока, обычно без молока'),
 ('Джелато','Мягкое мороженое с добавлением ягод, орехов, шоколада и свежих фруктов');
 
+insert into orders(idCustomer) values(1);
+insert into orders(idCustomer) values(2);
+

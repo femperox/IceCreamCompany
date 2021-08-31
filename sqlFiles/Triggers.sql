@@ -14,8 +14,8 @@ Begin
      sum = new.ingamount * 0.01 * ingPrice;
 	
      update Product set
-	    Price = Price + sum;
-	
+	    Price = Price + sum
+	 where new.idproduct = id;
 	 RETURN New;
   else
      select price 
@@ -25,8 +25,8 @@ Begin
   	 sum = old.ingamount * 0.01 * ingPrice;
     
 	 update Product set
-	    Price = Price - sum;
-	 	
+	    Price = Price - sum
+	 where old.idproduct = id;
 	 return old;
   end if;
 End;
@@ -52,7 +52,8 @@ Begin
      sum = new.productamount * prodPrice;
 	
      update Orders set
-	    Price = Price + sum;
+	    Price = Price + sum
+	 where new.idorder = id;
 	
 	 RETURN New;
   else
@@ -63,8 +64,8 @@ Begin
   	 sum = old.productamount * prodPrice;
     
 	 update Orders set
-	    Price = Price - sum;
-	 	
+	    Price = Price - sum
+	 where old.idorder = id;	
 	 return old;
   end if;
 End;
