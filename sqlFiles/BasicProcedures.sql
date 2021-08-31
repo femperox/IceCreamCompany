@@ -95,7 +95,7 @@ begin
 		  set productamount = productamount + 1
 		where (ProdId = idProduct and OrdId = idOrder);
 	else 
-	   insert into ordershaveproduct values (ProdId, IngId, 1);
+	   insert into ordershaveproduct values (OrdId,ProdId, 1);
 	end if;
 end;
 $$ Language plpgsql; 
@@ -109,12 +109,5 @@ $$;
 call PHIInsertUpdate(1,1);
 call PHIInsertUpdate(1,2);
 
-call OHPInsertUpdate(1, 1)
+call OHPInsertUpdate(5, 1)
 
-select * from producthasingr
-select * from product
-
-select * from ordershaveproduct
-select * from orders
-
-delete from orders

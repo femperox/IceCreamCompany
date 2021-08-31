@@ -74,3 +74,45 @@ $$ LANGUAGE plpgsql;
 create trigger t_order_price
 after insert or update or delete on OrdersHaveProduct for each row
 execute procedure update_order_price();
+
+create or replace function remove_product()
+returns trigger as $$
+Begin
+    
+  delete from ProductHasIngr where old.id = idProduct;
+  return old;
+  
+End;
+$$ LANGUAGE plpgsql;
+
+create trigger t_product_removal
+after delete on Product for each row
+execute procedure remove_product();
+
+create or replace function remove_customer()
+returns trigger as $$
+Begin
+    
+  delete from Orders where old.id = idCustomer;
+  return old;
+  
+End;
+$$ LANGUAGE plpgsql;
+
+create trigger t_customer_removal
+after delete on Customer for each row
+execute procedure remove_customer();
+
+create or replace function remove_order()
+returns trigger as $$
+Begin
+    
+  delete from ordershaveproduct where old.id = idOrder;
+  return old;
+  
+End;
+$$ LANGUAGE plpgsql;
+
+create trigger t_order_removal
+after delete on Customer for each row
+execute procedure remove_order();
