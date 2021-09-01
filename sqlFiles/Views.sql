@@ -1,10 +1,3 @@
-select * from orders
-select * from customer
-
-call orderinsert(5, NOW(), 'shipped')
-
-drop view if exists TopShopsForProduct;
-
 -- Все заказы 
 Create or replace view AllOrders as
 	select Customer.Name as Company_Name, Orders.Date, Orders.Status, Orders.Price 
