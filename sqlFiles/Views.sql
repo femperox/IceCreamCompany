@@ -1,6 +1,6 @@
 -- Все заказы 
 Create or replace view AllOrders as
-	select Customer.Name as Company_Name, Orders.Date, Orders.Status, Orders.Price 
+	select Orders.Id, Customer.Name as Company_Name, Orders.Date, Orders.Status, Orders.Price 
     from Orders
     Join customer on Orders.idcustomer = customer.id
 	order by date desc, status, price;
@@ -54,6 +54,24 @@ create or replace view ShopAvrgOrderMonthly as
 	  						)
 	from Orders
 	join Customer on Orders.idCustomer = Customer.id
-	order by Customer, month
+	order by Customer, Month;
 
 
+-- Для каждого месяца определить продукт, который добавлялся в заказ наибольшее количество раз.
+create or replace view DemandedProductMonthly as
+ 	 with TopProducts as
+  	 (select 
+		   getMonth(allOrders.date) as month,
+		   product, 
+		   productamount,
+		   max(productamount) over( partition by getMonth(allOrders.date)
+								   ) as topProduct
+	  from  allproductsinorder
+	  join allOrders on allOrders.id = allproductsinorder.orderid 
+	  order by month, topProduct, productamount desc
+     )
+    select month, product, topProduct from TopProducts
+    where productamount = topproduct
+	
+
+ 

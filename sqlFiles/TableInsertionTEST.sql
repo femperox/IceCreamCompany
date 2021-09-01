@@ -54,6 +54,11 @@ call orderinsert(3, '2021-08-20', 'shipped');
 call orderinsert(4, '2021-08-15', 'shipped');
 call orderinsert(4, cast(NOW() as date),'in stock');
 call orderinsert(4, cast(NOW() as date));
+-- Окей
+
+call orderinsert(5, '2021-07-15');
+
+
 
 -- Продукты в заказах
 call OHPInsertUpdate(1, 1, 2);
@@ -99,4 +104,5 @@ call OHPInsertUpdate(13, 1, 4);
 call OHPInsertUpdate(14, 2);
 call OHPInsertUpdate(14, 1);
 
-
+call OHPInsertUpdate(15, 2, 5);
+call OHPInsertUpdate(15, 1);
