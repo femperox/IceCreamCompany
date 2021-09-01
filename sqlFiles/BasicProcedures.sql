@@ -178,9 +178,9 @@ CusId -  айди покупателя
 OrdDate - дата поступления заказа
 OrdStatus - статус заказа
 */
-Create or Replace Procedure OrderInsert(CusId int, OrdDate date default now(), OrdStatus orderStatus default 'not in stock') as $$
+Create or Replace Procedure OrderInsert(CusId int, OrdDate date default now(), OrdStatus text default 'not in stock') as $$
 begin
-		insert into Orders(idCustomer, date, status) values(CusId, OrdDate, OrdStatus);
+		insert into Orders(idCustomer, date, status) values(CusId, OrdDate, cast(OrdStatus as orderStatus));
 end;
 $$ Language plpgsql; 
 
@@ -191,12 +191,12 @@ CusId -  айди покупателя
 OrdDate - дата поступления заказа
 OrdStatus - статус заказа
 */
-Create or Replace Procedure OrderUpdate(OrdId int, CusId int, OrdDate date default now(), OrdStatus orderStatus default 'not in stock') as $$
+Create or Replace Procedure OrderUpdate(OrdId int, CusId int, OrdDate date default now(), OrdStatus text default 'not in stock') as $$
 begin
 		update orders set 
 		  idCustomer = CusId,
 		  date = OrdDate,
-		  status = orderStatus
+		  status = cast(OrdStatus as orderStatus)
 		where OrdId = id;
 
 end;

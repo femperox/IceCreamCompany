@@ -198,3 +198,4 @@ create trigger t_order_removal
 after delete on Orders for each row
 execute procedure remove_order();
 
+
