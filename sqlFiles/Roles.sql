@@ -2,7 +2,7 @@
 -- 		 1. Просмотр всех таблиц
 --		 2. Изменение всех таблиц
 Create Role GenManager
-		with login encrypted password 'admin'
+		with login encrypted password 'admin';
 
 Grant Select, 
 	  Insert, 
@@ -32,7 +32,7 @@ To GenManager;
 --		 1. Просмотр таблицы заказов
 --		 2. Добавление заказа
 Create Role OrderPicker
-		with login encrypted password 'orders'
+		with login encrypted password 'orders';
 
 Grant Select,
 	  Insert,
@@ -41,6 +41,10 @@ On Orders
 To OrderPicker;
 
 Grant Select
-On AllOrders
-To GenManager;
+On AllOrders,
+   AllProductsInOrder
+To OrderPicker;
+
+
+
 
