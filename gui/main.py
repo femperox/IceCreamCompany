@@ -26,8 +26,9 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui.menubar.addAction(self.actions['exitAction'])
         self.ui.btnTest.clicked.connect(self.showOrders)
 
-        self.ui.btnTop5.setVisible(False)
-        self.ui.btnTop5.clicked.connect(self.showTop5)
+        self.ui.btnStatistic.setVisible(False)
+        self.ui.btnStatistic.clicked.connect(self.showMonthlyShopSums)
+
         self.ui.btnBack.setVisible(False)
         self.ui.btnBack.clicked.connect(self.showOrders)
 
@@ -112,7 +113,11 @@ class mainWindow(QtWidgets.QMainWindow):
 
 
     def showIngrs(self):
-        self.ui.btnTop5.setVisible(True)
+        self.ui.btnStatistic.disconnect()
+        self.ui.btnStatistic.setVisible(True)
+        self.ui.btnStatistic.setText('Топ 5 по месяцам')
+        self.ui.btnStatistic.clicked.connect(self.showTop5)
+
         query = 'select * from allIngredients;'
         result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
         labels = ['Название', 'Цена', 'Информация']
@@ -120,7 +125,8 @@ class mainWindow(QtWidgets.QMainWindow):
 
     def showTop5(self):
         self.ui.btnBack.setVisible(True)
-        self.ui.btnTop5.setVisible(False)
+        self.ui.btnStatistic.setVisible(False)
+
         self.ui.btnBack.clicked.connect(self.showIngrs)
 
         query = 'select * from Top5IngsMonthly'
@@ -129,22 +135,54 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget, labels, result)
 
     def showOrders(self):
-        self.ui.btnBack.setVisible(False)
+
+        if self.userRole == 'genmanager':
+            self.ui.btnStatistic.setVisible(True)
+            self.ui.btnStatistic.disconnect()
+            self.ui.btnStatistic.setText('Средние суммы')
+            self.ui.btnBack.setVisible(False)
+            self.ui.btnStatistic.clicked.connect(self.showMonthlyShopSums)
 
         query = 'select * from allOrders order by date;'
         result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
         labels = ['№ заказа', 'Компания', 'Дата', 'Статус', 'Цена']
         self.fillTable(self.ui.tableWidget,labels, result)
 
+    def showMonthlyShopSums(self):
+        self.ui.btnBack.setVisible(True)
+        self.ui.btnStatistic.setVisible(False)
+
+        self.ui.btnBack.clicked.connect(self.showOrders)
+
+        query = 'select * from ShopAvrgOrderMonthly order by month;'
+        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        labels = ['Заказчик', 'Месяц', 'Средняя сумма']
+        self.fillTable(self.ui.tableWidget, labels, result)
+
     def showProducts(self):
+        self.ui.btnStatistic.disconnect()
+        self.ui.btnStatistic.setVisible(True)
+        self.ui.btnStatistic.setText('Топ продуктов')
+        self.ui.btnStatistic.clicked.connect(self.showDemandedProduct)
 
         query = 'select * from allProducts;'
         result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
         labels = ['Название', 'Цена', 'Информация']
         self.fillTable(self.ui.tableWidget,labels, result)
 
-    def showCustomers(self):
+    def showDemandedProduct(self):
+        self.ui.btnBack.setVisible(True)
+        self.ui.btnStatistic.setVisible(False)
 
+        self.ui.btnBack.clicked.connect(self.showProducts)
+
+        query = 'select * from DemandedProductMonthly;'
+        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        labels = ['Месяц', 'Продукт', 'Количество добавлений']
+        self.fillTable(self.ui.tableWidget, labels, result)
+
+    def showCustomers(self):
+        self.ui.btnStatistic.setVisible(False)
         query = 'select * from allCustomers;'
         result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
         labels = ['Компания', 'Телефон']
