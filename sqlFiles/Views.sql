@@ -73,5 +73,36 @@ create or replace view DemandedProductMonthly as
     select month, product, topProduct from TopProducts
     where productamount = topproduct
 	
-
+-- Определить топ 5 ингредиентов, встречающихся в заказах за последний месяц
+create or replace view Top5IngsMonthly as
+	with TopIngred as
+  		(select distinct
+			getMonth(allOrders.date) as month,
+			allingsinproduct.ingredient,
+			count(allingsinproduct.ingredient) over (partition by getMonth(allOrders.date),ingredient ) as ingCount
+	
+		 from allingsinproduct
+		 join allproductsinorder on allingsinproduct.Product = allproductsinorder.Product
+		 join allOrders on allOrders.id = allproductsinorder.orderid 
+		 order by month, ingCount desc
+		),
+  	ListOfTops as
+  		( select distinct 
+	  	  month, 
+	  	  STRING_AGG(ingredient, ', ') over (
+	  										  partition by month
+	  										  order by ingCount desc
+	  										  ROWS BETWEEN UNBOUNDED PRECEDING AND 4 FOLLOWING 
+  								    		) as Top5
+		  from TopIngred
+   		  limit (select count(distinct month) from TopIngred)
+  		)
+	select * from ListOfTops
+	order by month
  
+
+		  
+		  
+		  
+		  
+		  
