@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'untitled.ui'
+# Form implementation generated from reading ui file 'mainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
 #
@@ -17,14 +17,18 @@ class Ui_MainWindow(object):
         MainWindow.resize(800, 600)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+        self.btnTest = QtWidgets.QPushButton(self.centralwidget)
+        self.btnTest.setGeometry(QtCore.QRect(100, 10, 93, 28))
+        self.btnTest.setObjectName("btnTest")
+        self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
+        self.tableWidget.setGeometry(QtCore.QRect(0, 50, 791, 501))
+        self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setColumnCount(0)
+        self.tableWidget.setRowCount(0)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
         self.menubar.setObjectName("menubar")
-        self.Dicts = QtWidgets.QMenu(self.menubar)
-        self.Dicts.setObjectName("Dicts")
-        self.Orders = QtWidgets.QMenu(self.menubar)
-        self.Orders.setObjectName("Orders")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -35,11 +39,6 @@ class Ui_MainWindow(object):
         self.Products.setObjectName("Products")
         self.Customers = QtWidgets.QAction(MainWindow)
         self.Customers.setObjectName("Customers")
-        self.Dicts.addAction(self.Ings)
-        self.Dicts.addAction(self.Products)
-        self.Dicts.addAction(self.Customers)
-        self.menubar.addAction(self.Dicts.menuAction())
-        self.menubar.addAction(self.Orders.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -47,8 +46,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.Dicts.setTitle(_translate("MainWindow", "Справочники"))
-        self.Orders.setTitle(_translate("MainWindow", "Заказы"))
+        self.btnTest.setText(_translate("MainWindow", "PushButton"))
         self.Ings.setText(_translate("MainWindow", "Ингридиенты"))
         self.Products.setText(_translate("MainWindow", "Продукты"))
         self.Customers.setText(_translate("MainWindow", "Заказчики"))
