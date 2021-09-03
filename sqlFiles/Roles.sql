@@ -16,6 +16,18 @@ On Ingredient,
    Customer
 To GenManager;
 
+Grant Select
+On AllCustomers,
+   AllIngredients,
+   AllIngsInProduct,
+   AllOrders,
+   AllProducts,
+   AllProductsInOrder,
+   DemandedProductMonthly,
+   ShopAvrgOrderMonthly,
+   Top5IngsMonthly
+To GenManager;
+
 -- роль: комплектовщик заказа
 --		 1. Просмотр таблицы заказов
 --		 2. Добавление заказа
@@ -27,4 +39,8 @@ Grant Select,
 	  Update
 On Orders
 To OrderPicker;
+
+Grant Select
+On AllOrders
+To GenManager;
 
