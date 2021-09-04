@@ -6,8 +6,6 @@ import  misc
 import sys
 
 
-    
-
 class mainWindow(QtWidgets.QMainWindow):
 
     actions = {}
@@ -24,7 +22,6 @@ class mainWindow(QtWidgets.QMainWindow):
         self.createActions()
 
         self.ui.menubar.addAction(self.actions['exitAction'])
-        self.ui.btnTest.clicked.connect(self.showOrders)
 
         self.ui.btnStatistic.setVisible(False)
         self.ui.btnStatistic.clicked.connect(self.showMonthlyShopSums)
@@ -47,6 +44,10 @@ class mainWindow(QtWidgets.QMainWindow):
 
         
     def createActions(self):
+        '''
+        Создаёт обработчики для пунктов меню
+        :return:
+        '''
         self.actions['exitAction'] = QtWidgets.QAction('&Выход', self)
         self.actions['exitAction'].setShortcut('Ctrl+Q')
         self.actions['exitAction'].triggered.connect(self.closeEvent)
@@ -65,6 +66,11 @@ class mainWindow(QtWidgets.QMainWindow):
 
 
     def checkRole(self):
+        '''
+        Проверяет роль пользователя в текущей сессии
+
+        :return:
+        '''
 
         query = 'SELECT session_user;'
         res = misc.selectFromBD(self.cursor, query)
@@ -73,6 +79,12 @@ class mainWindow(QtWidgets.QMainWindow):
 
 
     def closeEvent(self, event):
+        '''
+        Переопределение метода закрытия окна
+
+        :param event:
+        :return:
+        '''
         if self.conn != None : self.conn.close()
 
         self.destroy()
@@ -80,6 +92,14 @@ class mainWindow(QtWidgets.QMainWindow):
 
 
     def fillTable(self, tableWidg, labels, items):
+       '''
+       Заполняет таблицу данными
+
+       :param tableWidg: таблица, которую нужно заполнить
+       :param labels: список заголовков столбцов
+       :param items: данные
+       :return:
+       '''
        tableWidg.setRowCount(0)
 
        tableWidg.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
@@ -99,10 +119,14 @@ class mainWindow(QtWidgets.QMainWindow):
 
 
     def showNewTable(self, row, column):
+        '''
+        Реакция на двойной клик по ячейке в таблице с заказами
+        :param row: строка
+        :param column: колонка
+        :return:
+        '''
 
         id = self.ui.tableWidget.item(row,0).text()
-
-        #self.ui.tableWidgetMore.setVisible(True)
         self.ui.btnBack.setVisible(True)
 
         query = 'select product, productAmount, price, totalPrice from allProductsInOrder where orderId = {0}'.format(id)
@@ -113,6 +137,11 @@ class mainWindow(QtWidgets.QMainWindow):
 
 
     def showIngrs(self):
+        '''
+        Подготовка отображения раздела с ингридиентами
+        :return:
+        '''
+
         self.ui.btnStatistic.disconnect()
         self.ui.btnStatistic.setVisible(True)
         self.ui.btnStatistic.setText('Топ 5 по месяцам')
@@ -124,6 +153,11 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget,labels, result)
 
     def showTop5(self):
+        '''
+        Подготовка отображения раздела со статистической задачей
+        :return:
+        '''
+
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
 
@@ -135,6 +169,10 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget, labels, result)
 
     def showOrders(self):
+        '''
+        Подготовка отображения раздела с заказами
+        :return:
+        '''
 
         if self.userRole == 'genmanager':
             self.ui.btnStatistic.setVisible(True)
@@ -149,6 +187,11 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget,labels, result)
 
     def showMonthlyShopSums(self):
+        '''
+        Подготовка отображения раздела со статистической задачей
+        :return:
+        '''
+
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
 
@@ -160,6 +203,11 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget, labels, result)
 
     def showProducts(self):
+        '''
+        Подготовка отображения раздела с продуктами
+        :return:
+        '''
+
         self.ui.btnStatistic.disconnect()
         self.ui.btnStatistic.setVisible(True)
         self.ui.btnStatistic.setText('Топ продуктов')
@@ -171,6 +219,11 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget,labels, result)
 
     def showDemandedProduct(self):
+        '''
+        Подготовка отображения раздела со статистической задачей
+        :return:
+        '''
+
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
 
@@ -182,6 +235,11 @@ class mainWindow(QtWidgets.QMainWindow):
         self.fillTable(self.ui.tableWidget, labels, result)
 
     def showCustomers(self):
+        '''
+        Подготовка отображения раздела с заказчиками
+        :return:
+        '''
+
         self.ui.btnStatistic.setVisible(False)
         query = 'select * from allCustomers;'
         result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
@@ -204,6 +262,10 @@ class loginDialog(QtWidgets.QDialog):
         self.ui.btnLogin.clicked.connect(self.startApplication)
 
     def startApplication(self):
+        '''
+        Вход в систему
+        :return:
+        '''
 
         userName = self.ui.lineUser.text()
         userPassw = self.ui.linePassword.text()
@@ -231,6 +293,12 @@ class loginDialog(QtWidgets.QDialog):
 
 
     def closeEvent(self, event):
+        '''
+        Переопределение метода закрытия окна
+
+        :param event:
+        :return:
+        '''
 
         if self.conn != None : self.conn.close()
         self.destroy()
