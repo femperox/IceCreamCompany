@@ -28,6 +28,11 @@ On AllCustomers,
    Top5IngsMonthly
 To GenManager;
 
+Grant Usage, 
+      select
+On all sequences in schema public
+To GenManager;
+
 -- роль: комплектовщик заказа
 --		 1. Просмотр таблицы заказов
 --		 2. Добавление заказа
