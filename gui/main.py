@@ -291,7 +291,7 @@ class mainWindow(QtWidgets.QMainWindow):
         :return:
         '''
         self.ui.widgControl.setVisible(True)
-
+        self.ui.btnBack.setVisible(False)
         self.currentSender = self.senders[0]
 
         if self.userRole == 'genmanager':
@@ -477,10 +477,10 @@ class addDialog(QtWidgets.QDialog):
             result = misc.selectFromBD(cur, query)
 
             for item in result:
-              self.ui.comboBoxIng.addItem(str(item[0]))
+              self.ui.comboBoxCompany.addItem(str(item[0]))
 
             for state in ['not in stock', 'in stock', 'shipped', 'returned to warehouse', 'shipment cancellation']:
-                self.ui.comboBoxIng.addItem(state)
+                self.ui.comboBoxState.addItem(state)
 
 
         cur.close()
@@ -520,6 +520,20 @@ class addDialog(QtWidgets.QDialog):
             currentInfo =[self.itemId, result[0][0], info[1]]
 
             query = "Call PHIInsertUpdate({0},{1},{2});".format(currentInfo[0], currentInfo[1], currentInfo[2])
+        elif self.currentSender == 'order':
+
+            items = [self.ui.comboBoxCompany, self.ui.dateEdit, self.ui.comboBoxState]
+            info = self.getText(items)
+
+            cur = self.conn.cursor()
+            query = "select id from Customer where name = '{0}'".format(info[0])
+            result = misc.selectFromBD(cur, query)
+            cur.close()
+
+            currentInfo = [result[0][0], info[1], info[2]]
+
+            query = "Call OrderInsert({0},'{1}','{2}');".format(currentInfo[0], currentInfo[1], currentInfo[2])
+
 
         try:
             if query == 'error' or query == '': raise Exception()
@@ -542,6 +556,8 @@ class addDialog(QtWidgets.QDialog):
 
                 if isinstance(item, QtWidgets.QComboBox):
                     text = item.currentText()
+                elif isinstance(item, QtWidgets.QDateEdit):
+                    text = item.date().toPyDate()
                 else:
                     text = item.text()
                 info.append(text)
@@ -586,6 +602,8 @@ class delDialog(QtWidgets.QDialog):
            query = "Call IngDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
        elif self.currentSender == 'product':
            query = "Call ProductDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
+       elif self.currentSender == 'order':
+           query = "Call OrdersDelete({0})".format(self.item[0]) if len(self.item) != 0 else 'error'
        elif self.currentSender == 'ingInPr':
 
            cur = self.conn.cursor()
@@ -632,6 +650,7 @@ class ediDialog(QtWidgets.QDialog):
                    }
 
         widgets[sender].setVisible(True)
+        self.prepareComboBox()
 
 
     def prepareComboBox(self):
@@ -646,10 +665,10 @@ class ediDialog(QtWidgets.QDialog):
             result = misc.selectFromBD(cur, query)
 
             for item in result:
-                self.ui.comboBoxIng.addItem(str(item[0]))
+                self.ui.comboBoxCompany.addItem(str(item[0]))
 
             for state in ['not in stock', 'in stock', 'shipped', 'returned to warehouse', 'shipment cancellation']:
-                self.ui.comboBoxIng.addItem(state)
+                self.ui.comboBoxState.addItem(state)
 
         cur.close()
 
@@ -672,6 +691,20 @@ class ediDialog(QtWidgets.QDialog):
             info = self.getText(items)
 
             query = "Call ProductUpdate('{0}','{1}','{2}');".format(self.item[0], info[0], info[1]) if len(info) != 0 else 'error'
+        elif self.currentSender == 'order':
+            items = [self.ui.comboBoxCompany, self.ui.dateEdit, self.ui.comboBoxState]
+            info = self.getText(items)
+
+            cur = self.conn.cursor()
+            query = "select id from Customer where name = '{0}'".format(info[0])
+            result = misc.selectFromBD(cur, query)
+            cur.close()
+
+            currentInfo = [self.item[0], result[0][0], info[1], info[2]]
+
+            query = "Call OrderUpdate({0},{1},'{2}','{3}');".format(currentInfo[0], currentInfo[1], currentInfo[2], currentInfo[3])
+
+
 
         elif self.currentSender == 'ingInPr':
 
