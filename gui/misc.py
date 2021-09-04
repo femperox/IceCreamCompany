@@ -13,8 +13,6 @@ def transaction(conn, query):
     conn.commit()
     cursor.close()
 
-    return  result
-
 
 def connect(userName, userPassw):
     return ps2.connect(dbname='IceCreamCompany', user=userName,

@@ -3,6 +3,8 @@ from Sources.mainWindow import Ui_MainWindow
 from Sources.LoginDialog import Ui_Dialog
 from Sources.DialogAdd import Ui_Dialog as AddUi_Dialog
 from Sources.DialogDelete import Ui_Dialog as DelUi_Dialog
+from Sources.DialogEdit import Ui_Dialog as EdiUi_Dialog
+
 from pprint import pprint
 import  misc
 import sys
@@ -26,10 +28,12 @@ class mainWindow(QtWidgets.QMainWindow):
 
         self.ui.btnCreate.clicked.connect(self.openAddDialog)
         self.ui.btnDelete.clicked.connect(self.openDelDialog)
+        self.ui.btnEdit.clicked.connect(self.openEditDialog)
 
         self.ui.btnStatistic.setVisible(False)
         self.ui.btnStatistic.clicked.connect(self.showMonthlyShopSums)
 
+        self.ui.tableWidget.cellDoubleClicked.connect(self.showOrderInfo)
         self.ui.widgControl.setVisible(False)
 
         self.ui.btnBack.setVisible(False)
@@ -84,8 +88,6 @@ class mainWindow(QtWidgets.QMainWindow):
         query = 'SELECT session_user;'
         res = misc.selectFromBD(self.cursor, query)
 
-        print(res)
-
 
     def closeEvent(self, event):
         '''
@@ -115,9 +117,14 @@ class mainWindow(QtWidgets.QMainWindow):
        tableWidg.setColumnCount(len(labels))
        tableWidg.setHorizontalHeaderLabels(labels)
 
-       tableWidg.cellDoubleClicked.connect(self.showNewTable)
-       if labels[0] != '№ заказа':
-           tableWidg.cellDoubleClicked.disconnect()
+       if labels[0]=='№ заказа':
+            tableWidg.cellDoubleClicked.connect(self.showOrderInfo)
+       elif labels[0] =='Нaзвание':
+            tableWidg.cellDoubleClicked.connect(self.showProductInfo)
+       else:
+           try:
+               tableWidg.cellDoubleClicked.disconnect()
+           except: pass
 
        for item in items:
            row = tableWidg.rowCount()
@@ -135,12 +142,28 @@ class mainWindow(QtWidgets.QMainWindow):
     def openDelDialog(self):
 
         try:
-            rows = self.ui.tableWidget.selectedIndexes()
-            if len(rows) > 1: raise Exception('Выделено больше одного объекта')
-            row = rows[0].row()
+            item = self.prepareRow()
 
-            item = self.getRow(row)
-            pprint(item)
+            dialog = delDialog(self.conn, self.currentSender, item)
+            dialog.exec()
+            self.updateWindow()
+
+        except:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Неправильный диапозон')
+            msg.setWindowTitle("Ошибка выделения")
+            msg.exec_()
+
+    def openEditDialog(self):
+
+        try:
+            item = self.prepareRow()
+
+            dialog = ediDialog(self.conn, self.currentSender, item)
+            dialog.exec()
+            self.updateWindow()
 
         except:
             msg = QtWidgets.QMessageBox()
@@ -151,8 +174,13 @@ class mainWindow(QtWidgets.QMainWindow):
             msg.exec_()
 
 
+    def prepareRow(self):
 
+        rows = self.ui.tableWidget.selectedIndexes()
+        if len(rows) > 1: raise Exception('Выделено больше одного объекта')
+        row = rows[0].row()
 
+        return self.getRow(row)
 
     def getRow(self, row):
 
@@ -176,7 +204,7 @@ class mainWindow(QtWidgets.QMainWindow):
             self.showProducts()
 
 
-    def showNewTable(self, row, column):
+    def showOrderInfo(self, row, column):
         '''
         Реакция на двойной клик по ячейке в таблице с заказами
         :param row: строка
@@ -188,7 +216,7 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui.btnBack.disconnect()
         self.ui.btnBack.clicked.connect(self.showOrders)
 
-        self.currentSender = self.senders[6]
+        self.currentSender = self.senders[5]
 
         query = 'select product, productAmount, price, totalPrice from allProductsInOrder where orderId = {0}'.format(id)
         result = misc.selectFromBD(self.cursor, query)
@@ -196,6 +224,19 @@ class mainWindow(QtWidgets.QMainWindow):
 
         self.fillTable(self.ui.tableWidget, labels, result)
 
+    def showProductInfo(self, row, column):
+        name = self.ui.tableWidget.item(row, 0).text()
+        self.ui.btnBack.setVisible(True)
+        self.ui.btnBack.disconnect()
+        self.ui.btnBack.clicked.connect(self.showProducts)
+
+        self.currentSender = self.senders[4]
+
+        query = "select ingredient, ingAmount, info from allIngsInProduct where product = '{0}'".format(name)
+        result = misc.selectFromBD(self.cursor, query)
+        labels = ['Ингридиент', 'Кол-во', 'Информация']
+
+        self.fillTable(self.ui.tableWidget, labels, result)
 
     def showIngrs(self):
         '''
@@ -284,7 +325,8 @@ class mainWindow(QtWidgets.QMainWindow):
 
         query = 'select * from allProducts;'
         result = misc.selectFromBD(self.cursor, query)
-        labels = ['Название', 'Цена', 'Информация']
+        # англ a
+        labels = ['Нaзвание', 'Цена', 'Информация']
         self.fillTable(self.ui.tableWidget,labels, result)
 
     def showDemandedProduct(self):
@@ -383,16 +425,17 @@ class addDialog(QtWidgets.QDialog):
         self.ui.setupUi(self)
         self.setWindowTitle('Добавить')
 
-        widgets =  { 'customer' : self.ui.widgAddCustomer
+        pprint(sender)
 
+        widgets =  { 'customer': self.ui.widgAddCustomer,
+                     'ing': self.ui.widgetAddIng
                    }
 
-        self.currentSender= sender
-
-        self.ui.btnCancel.clicked.connect(self.closeEvent)
-        self.ui.btnAdd.clicked.connect(self.addInfo)
-
+        self.currentSender = sender
         widgets[sender].setVisible(True)
+
+        self.ui.btnCancel.clicked.connect(self.close)
+        self.ui.btnAdd.clicked.connect(self.addInfo)
 
         self.conn = conn
 
@@ -404,13 +447,18 @@ class addDialog(QtWidgets.QDialog):
 
             items = [self.ui.lineCompany, self.ui.linePhone]
             info = self.getText(items)
-            pprint(info)
 
             query = "Call CustomerInsert('{0}','{1}');".format(info[0], info[1]) if len(info)!=0 else 'error'
+        elif self.currentSender == 'ing':
+
+            items = [self.ui.lineIngName, self.ui.lineIngPrice, self.ui.lineIngInfo]
+            info = self.getText(items)
+
+            query = "Call IngInsert('{0}','{1}','{2}');".format(info[0], info[1], info[2]) if len(info)!=0 else 'error'
 
         try:
             if query == 'error' or query == '': raise Exception()
-            result = misc.transaction(self.conn, query)
+            misc.transaction(self.conn, query)
         except:
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Critical)
@@ -451,13 +499,98 @@ class delDialog(QtWidgets.QDialog):
 
         self.ui.labelInfo.setText('Удалить {0}?'.format(item[0]))
 
-        self.ui.btnNo.clicked.connected(self.closeEvent)
-        self.ui.btnYes.clicked.connected(self.deleteInfo)
+        self.ui.btnNo.clicked.connect(self.close)
+        self.ui.btnYes.clicked.connect(self.deleteInfo)
 
         self.conn = conn
+        self.currentSender = sender
+        self.item = item
 
     def deleteInfo(self):
-       pass
+
+       if self.currentSender == 'customer':
+           query = "Call CustomerDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
+       elif self.currentSender == 'order':
+           query = "Call OrdersDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
+       elif self.currentSender == 'ing':
+           query = "Call IngDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
+       elif self.currentSender == 'product':
+           query = "Call ProductDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
+
+       try:
+           if query == 'error' or query == '': raise Exception()
+           misc.transaction(self.conn, query)
+       except:
+           msg = QtWidgets.QMessageBox()
+           msg.setIcon(QtWidgets.QMessageBox.Critical)
+           msg.setText("Ошибка")
+           msg.setInformativeText('Неправильный запрос')
+           msg.setWindowTitle("Ошибка запроса")
+           msg.exec_()
+
+       self.close()
+
+class ediDialog(QtWidgets.QDialog):
+
+    def __init__(self, conn, sender, item):
+        super(ediDialog, self).__init__()
+        self.ui = EdiUi_Dialog()
+        self.ui.setupUi(self)
+        self.setWindowTitle('Изменить')
+
+        self.ui.btnCancel.clicked.connect(self.close)
+        self.ui.btnEdit.clicked.connect(self.editInfo)
+
+        self.conn = conn
+        self.currentSender = sender
+        self.item = item
+
+        widgets =  { 'customer' : self.ui.widgCustomer,
+                     'ing': self.ui.widgetAddIng
+
+                   }
+
+        widgets[sender].setVisible(True)
+
+    def editInfo(self):
+        query = ''
+
+        if self.currentSender == 'customer':
+            items = [self.ui.lineCompany, self.ui.linePhone]
+            info = self.getText(items)
+
+            query = "Call CustomerUpdate('{0}','{1}', '{2}');".format(self.item[0], info[0], info[1]) if len(info) != 0 else 'error'
+        elif self.currentSender == 'ing':
+
+            items = [self.ui.lineIngName, self.ui.lineIngPrice, self.ui.lineIngInfo]
+            info = self.getText(items)
+
+            query = "Call IngUpdate('{0}','{1}','{2}','{3}');".format(self.item[0], info[0], info[1], info[2]) if len(info)!=0 else 'error'
+
+        try:
+            if query == 'error' or query == '': raise Exception()
+            misc.transaction(self.conn, query)
+        except:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Неправильный запрос')
+            msg.setWindowTitle("Ошибка запроса")
+            msg.exec_()
+
+        self.close()
+
+
+    def getText(self, items):
+
+        info = []
+
+        for i in range(len(items)):
+            text = items[i].text()
+            if text == '': text = self.item[i]
+            info.append(text)
+
+        return info
 
 
 app = QtWidgets.QApplication([])
