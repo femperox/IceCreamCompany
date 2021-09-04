@@ -39,6 +39,8 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui.btnBack.setVisible(False)
         self.ui.btnBack.clicked.connect(self.showOrders)
 
+        self.itemToUpdate = ''
+
         query = 'select session_user;'
 
         result = misc.selectFromBD(self.cursor, query)
@@ -117,14 +119,15 @@ class mainWindow(QtWidgets.QMainWindow):
        tableWidg.setColumnCount(len(labels))
        tableWidg.setHorizontalHeaderLabels(labels)
 
+       try:
+           tableWidg.cellDoubleClicked.disconnect()
+       except:
+           pass
+
        if labels[0]=='№ заказа':
             tableWidg.cellDoubleClicked.connect(self.showOrderInfo)
        elif labels[0] =='Нaзвание':
             tableWidg.cellDoubleClicked.connect(self.showProductInfo)
-       else:
-           try:
-               tableWidg.cellDoubleClicked.disconnect()
-           except: pass
 
        for item in items:
            row = tableWidg.rowCount()
@@ -135,7 +138,7 @@ class mainWindow(QtWidgets.QMainWindow):
 
     def openAddDialog(self):
 
-        dialog = addDialog(self.conn, self.currentSender)
+        dialog = addDialog(self.conn, self.currentSender, self.itemToUpdate)
         dialog.exec()
         self.updateWindow()
 
@@ -144,7 +147,7 @@ class mainWindow(QtWidgets.QMainWindow):
         try:
             item = self.prepareRow()
 
-            dialog = delDialog(self.conn, self.currentSender, item)
+            dialog = delDialog(self.conn, self.currentSender, item, self.itemToUpdate)
             dialog.exec()
             self.updateWindow()
 
@@ -161,7 +164,7 @@ class mainWindow(QtWidgets.QMainWindow):
         try:
             item = self.prepareRow()
 
-            dialog = ediDialog(self.conn, self.currentSender, item)
+            dialog = ediDialog(self.conn, self.currentSender, item, self.itemToUpdate)
             dialog.exec()
             self.updateWindow()
 
@@ -202,6 +205,8 @@ class mainWindow(QtWidgets.QMainWindow):
             self.showCustomers()
         elif self.currentSender == self.senders[3]:
             self.showProducts()
+        elif self.currentSender == self.senders[4]:
+            self.showProducts()
 
 
     def showOrderInfo(self, row, column):
@@ -215,6 +220,7 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui.btnBack.setVisible(True)
         self.ui.btnBack.disconnect()
         self.ui.btnBack.clicked.connect(self.showOrders)
+        self.ui.btnStatistic.setVisible(False)
 
         self.currentSender = self.senders[5]
 
@@ -228,9 +234,16 @@ class mainWindow(QtWidgets.QMainWindow):
         name = self.ui.tableWidget.item(row, 0).text()
         self.ui.btnBack.setVisible(True)
         self.ui.btnBack.disconnect()
+        self.ui.btnStatistic.setVisible(False)
         self.ui.btnBack.clicked.connect(self.showProducts)
 
         self.currentSender = self.senders[4]
+
+        query = "select id from Product where name = '{0}'".format(self.ui.tableWidget.item(row,0).text())
+        result = misc.selectFromBD(self.cursor, query)
+        self.itemToUpdate = result[0][0]
+
+
 
         query = "select ingredient, ingAmount, info from allIngsInProduct where product = '{0}'".format(name)
         result = misc.selectFromBD(self.cursor, query)
@@ -317,6 +330,7 @@ class mainWindow(QtWidgets.QMainWindow):
         '''
         self.ui.widgControl.setVisible(True)
         self.ui.btnStatistic.disconnect()
+        self.ui.btnBack.setVisible(False)
         self.ui.btnStatistic.setVisible(True)
         self.ui.btnStatistic.setText('Топ продуктов')
         self.ui.btnStatistic.clicked.connect(self.showDemandedProduct)
@@ -328,6 +342,7 @@ class mainWindow(QtWidgets.QMainWindow):
         # англ a
         labels = ['Нaзвание', 'Цена', 'Информация']
         self.fillTable(self.ui.tableWidget,labels, result)
+
 
     def showDemandedProduct(self):
         '''
@@ -419,16 +434,17 @@ class loginDialog(QtWidgets.QDialog):
 
 class addDialog(QtWidgets.QDialog):
 
-    def __init__(self, conn, sender):
+    def __init__(self, conn, sender, itemId):
         super(addDialog, self).__init__()
         self.ui = AddUi_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle('Добавить')
 
-        pprint(sender)
-
         widgets =  { 'customer': self.ui.widgAddCustomer,
-                     'ing': self.ui.widgetAddIng
+                     'ing': self.ui.widgetAddIng,
+                     'product': self.ui.widgetProduct,
+                     'ingInPr': self.ui.widgetIngInPrd,
+                     'order': self.ui.widgetOrder
                    }
 
         self.currentSender = sender
@@ -436,8 +452,38 @@ class addDialog(QtWidgets.QDialog):
 
         self.ui.btnCancel.clicked.connect(self.close)
         self.ui.btnAdd.clicked.connect(self.addInfo)
-
+        self.itemId = itemId
         self.conn = conn
+
+        self.prepareComboBox()
+
+    def prepareComboBox(self):
+
+        query = ''
+        cur = self.conn.cursor()
+        result = []
+
+        if self.currentSender == 'ingInPr':
+
+            query = 'select name from allIngredients'
+            result = misc.selectFromBD(cur, query)
+
+            for item in result:
+              self.ui.comboBoxIng.addItem(str(item[0]))
+
+        elif self.currentSender == 'order':
+
+            query = 'select name from Customer'
+            result = misc.selectFromBD(cur, query)
+
+            for item in result:
+              self.ui.comboBoxIng.addItem(str(item[0]))
+
+            for state in ['not in stock', 'in stock', 'shipped', 'returned to warehouse', 'shipment cancellation']:
+                self.ui.comboBoxIng.addItem(state)
+
+
+        cur.close()
 
     def addInfo(self):
 
@@ -455,6 +501,25 @@ class addDialog(QtWidgets.QDialog):
             info = self.getText(items)
 
             query = "Call IngInsert('{0}','{1}','{2}');".format(info[0], info[1], info[2]) if len(info)!=0 else 'error'
+        elif self.currentSender == 'product':
+
+            items = [self.ui.lineProdName, self.ui.lineProdInfo]
+            info = self.getText(items)
+
+            query = "Call ProductInsert('{0}','{1}');".format(info[0], info[1]) if len(info) != 0 else 'error'
+        elif self.currentSender == 'ingInPr':
+
+            items = [self.ui.comboBoxIng, self.ui.lineAmountIng]
+            info = self.getText(items)
+
+            cur = self.conn.cursor()
+            query = "select id from Ingredient where name = '{0}'".format(info[0])
+            result = misc.selectFromBD(cur, query)
+            cur.close()
+
+            currentInfo =[self.itemId, result[0][0], info[1]]
+
+            query = "Call PHIInsertUpdate({0},{1},{2});".format(currentInfo[0], currentInfo[1], currentInfo[2])
 
         try:
             if query == 'error' or query == '': raise Exception()
@@ -474,7 +539,11 @@ class addDialog(QtWidgets.QDialog):
         info = []
         try:
             for item in items:
-                text = item.text()
+
+                if isinstance(item, QtWidgets.QComboBox):
+                    text = item.currentText()
+                else:
+                    text = item.text()
                 info.append(text)
                 if text == '': raise Exception()
 
@@ -491,7 +560,7 @@ class addDialog(QtWidgets.QDialog):
 
 class delDialog(QtWidgets.QDialog):
 
-    def __init__(self, conn, sender, item):
+    def __init__(self, conn, sender, item, parentItem):
         super(delDialog, self).__init__()
         self.ui = DelUi_Dialog()
         self.ui.setupUi(self)
@@ -503,6 +572,7 @@ class delDialog(QtWidgets.QDialog):
         self.ui.btnYes.clicked.connect(self.deleteInfo)
 
         self.conn = conn
+        self.parentItem = parentItem
         self.currentSender = sender
         self.item = item
 
@@ -516,6 +586,13 @@ class delDialog(QtWidgets.QDialog):
            query = "Call IngDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
        elif self.currentSender == 'product':
            query = "Call ProductDelete('{0}');".format(self.item[0]) if len(self.item) != 0 else 'error'
+       elif self.currentSender == 'ingInPr':
+
+           cur = self.conn.cursor()
+           query = "select id from Ingredient where name = '{0}'".format(self.item[0])
+           result = misc.selectFromBD(cur, query)
+
+           query = "Call PHIDelete({0}, {1});".format(self.parentItem, result[0][0])
 
        try:
            if query == 'error' or query == '': raise Exception()
@@ -532,7 +609,7 @@ class delDialog(QtWidgets.QDialog):
 
 class ediDialog(QtWidgets.QDialog):
 
-    def __init__(self, conn, sender, item):
+    def __init__(self, conn, sender, item, parentItem):
         super(ediDialog, self).__init__()
         self.ui = EdiUi_Dialog()
         self.ui.setupUi(self)
@@ -544,13 +621,37 @@ class ediDialog(QtWidgets.QDialog):
         self.conn = conn
         self.currentSender = sender
         self.item = item
+        self.parentItem = parentItem
 
         widgets =  { 'customer' : self.ui.widgCustomer,
-                     'ing': self.ui.widgetAddIng
+                     'ing': self.ui.widgetAddIng,
+                     'product': self.ui.widgetProduct,
+                     'ingInPr': self.ui.widgetIngInPrd,
+                     'order': self.ui.widgetOrder
 
                    }
 
         widgets[sender].setVisible(True)
+
+
+    def prepareComboBox(self):
+
+        query = ''
+        cur = self.conn.cursor()
+        result = []
+
+        if self.currentSender == 'order':
+
+            query = 'select name from Customer'
+            result = misc.selectFromBD(cur, query)
+
+            for item in result:
+                self.ui.comboBoxIng.addItem(str(item[0]))
+
+            for state in ['not in stock', 'in stock', 'shipped', 'returned to warehouse', 'shipment cancellation']:
+                self.ui.comboBoxIng.addItem(state)
+
+        cur.close()
 
     def editInfo(self):
         query = ''
@@ -566,6 +667,30 @@ class ediDialog(QtWidgets.QDialog):
             info = self.getText(items)
 
             query = "Call IngUpdate('{0}','{1}','{2}','{3}');".format(self.item[0], info[0], info[1], info[2]) if len(info)!=0 else 'error'
+        elif self.currentSender == 'product':
+            items = [self.ui.lineProdName, self.ui.lineProdInfo]
+            info = self.getText(items)
+
+            query = "Call ProductUpdate('{0}','{1}','{2}');".format(self.item[0], info[0], info[1]) if len(info) != 0 else 'error'
+
+        elif self.currentSender == 'ingInPr':
+
+            items = [self.ui.lineAmountIng]
+            info = self.getText(items)
+
+            cur = self.conn.cursor()
+
+            query = "select id from Ingredient where name = '{0}'".format(self.item[0])
+            result = misc.selectFromBD(cur, query)
+
+            cur.close()
+
+            currentInfo =[self.parentItem, result[0][0], info[0]]
+
+            query = "Call PHIDelete({0}, {1});".format(currentInfo[0], currentInfo[1])
+            misc.transaction(self.conn, query)
+
+            query = "Call PHIInsertUpdate({0},{1},{2});".format(currentInfo[0], currentInfo[1], currentInfo[2])
 
         try:
             if query == 'error' or query == '': raise Exception()
@@ -586,7 +711,10 @@ class ediDialog(QtWidgets.QDialog):
         info = []
 
         for i in range(len(items)):
-            text = items[i].text()
+            if isinstance(items[i], QtWidgets.QComboBox):
+                text = items[i].currentText()
+            else:
+                text = items[i].text()
             if text == '': text = self.item[i]
             info.append(text)
 
