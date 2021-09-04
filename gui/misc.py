@@ -6,16 +6,17 @@ def selectFromBD(cursor, query):
     result = cursor.fetchall()
     return result
 
-def selectFromBDWithConn(userName, userPassw, query):
+def transaction(conn, query):
 
-    conn = connect(userName, userPassw)
     cursor = conn.cursor()
-    cursor.execute(query)
-    result = cursor.fetchall()
+    result = cursor.execute(query)
+    conn.commit()
     cursor.close()
-    conn.close()
-    return result
+
+    return  result
+
 
 def connect(userName, userPassw):
     return ps2.connect(dbname='IceCreamCompany', user=userName,
                        password=userPassw, host='localhost')
+

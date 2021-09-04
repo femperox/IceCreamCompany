@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets
 from Sources.mainWindow import Ui_MainWindow
 from Sources.LoginDialog import Ui_Dialog
+from Sources.DialogAdd import Ui_Dialog as AddUi_Dialog
+from Sources.DialogDelete import Ui_Dialog as DelUi_Dialog
 from pprint import pprint
 import  misc
 import sys
@@ -10,21 +12,25 @@ class mainWindow(QtWidgets.QMainWindow):
 
     actions = {}
 
-    def __init__(self, parent, conn, pasw):
+    def __init__(self, parent, conn):
         super(mainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
         self.parent = parent
         self.conn = conn
-        self.pasw = pasw
         self.cursor = conn.cursor()
         self.createActions()
 
         self.ui.menubar.addAction(self.actions['exitAction'])
 
+        self.ui.btnCreate.clicked.connect(self.openAddDialog)
+        self.ui.btnDelete.clicked.connect(self.openDelDialog)
+
         self.ui.btnStatistic.setVisible(False)
         self.ui.btnStatistic.clicked.connect(self.showMonthlyShopSums)
+
+        self.ui.widgControl.setVisible(False)
 
         self.ui.btnBack.setVisible(False)
         self.ui.btnBack.clicked.connect(self.showOrders)
@@ -41,6 +47,9 @@ class mainWindow(QtWidgets.QMainWindow):
             dicts.addAction(self.actions['customers'])
 
         self.ui.menubar.addAction(self.actions['orders'])
+
+        self.senders = ['order', 'ing', 'customer', 'product', 'ingInPr', 'prInOrd']
+        self.currentSender = ''
 
         
     def createActions(self):
@@ -117,6 +126,55 @@ class mainWindow(QtWidgets.QMainWindow):
            for i in range(len(item)):
              tableWidg.setItem(row, i, QtWidgets.QTableWidgetItem(str(item[i])))
 
+    def openAddDialog(self):
+
+        dialog = addDialog(self.conn, self.currentSender)
+        dialog.exec()
+        self.updateWindow()
+
+    def openDelDialog(self):
+
+        try:
+            rows = self.ui.tableWidget.selectedIndexes()
+            if len(rows) > 1: raise Exception('Выделено больше одного объекта')
+            row = rows[0].row()
+
+            item = self.getRow(row)
+            pprint(item)
+
+        except:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Неправильный диапозон')
+            msg.setWindowTitle("Ошибка выделения")
+            msg.exec_()
+
+
+
+
+
+    def getRow(self, row):
+
+        item = []
+
+        for i in range(self.ui.tableWidget.columnCount()):
+            item.append(self.ui.tableWidget.item(row, i).text())
+
+        return item
+
+
+    def updateWindow(self):
+
+        if self.currentSender == self.senders[0]:
+            self.showOrders()
+        elif self.currentSender == self.senders[1]:
+            self.showIngrs()
+        elif self.currentSender == self.senders[2]:
+            self.showCustomers()
+        elif self.currentSender == self.senders[3]:
+            self.showProducts()
+
 
     def showNewTable(self, row, column):
         '''
@@ -125,12 +183,15 @@ class mainWindow(QtWidgets.QMainWindow):
         :param column: колонка
         :return:
         '''
-
         id = self.ui.tableWidget.item(row,0).text()
         self.ui.btnBack.setVisible(True)
+        self.ui.btnBack.disconnect()
+        self.ui.btnBack.clicked.connect(self.showOrders)
+
+        self.currentSender = self.senders[6]
 
         query = 'select product, productAmount, price, totalPrice from allProductsInOrder where orderId = {0}'.format(id)
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Продукт', 'Кол-во', 'Цена', 'Итоговая цена']
 
         self.fillTable(self.ui.tableWidget, labels, result)
@@ -141,14 +202,16 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с ингридиентами
         :return:
         '''
-
+        self.ui.widgControl.setVisible(True)
         self.ui.btnStatistic.disconnect()
         self.ui.btnStatistic.setVisible(True)
         self.ui.btnStatistic.setText('Топ 5 по месяцам')
         self.ui.btnStatistic.clicked.connect(self.showTop5)
 
+        self.currentSender = self.senders[1]
+
         query = 'select * from allIngredients;'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Название', 'Цена', 'Информация']
         self.fillTable(self.ui.tableWidget,labels, result)
 
@@ -157,14 +220,14 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела со статистической задачей
         :return:
         '''
-
+        self.ui.widgControl.setVisible(False)
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
 
         self.ui.btnBack.clicked.connect(self.showIngrs)
 
         query = 'select * from Top5IngsMonthly'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Месяц', 'Продукты']
         self.fillTable(self.ui.tableWidget, labels, result)
 
@@ -173,6 +236,9 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с заказами
         :return:
         '''
+        self.ui.widgControl.setVisible(True)
+
+        self.currentSender = self.senders[0]
 
         if self.userRole == 'genmanager':
             self.ui.btnStatistic.setVisible(True)
@@ -181,8 +247,9 @@ class mainWindow(QtWidgets.QMainWindow):
             self.ui.btnBack.setVisible(False)
             self.ui.btnStatistic.clicked.connect(self.showMonthlyShopSums)
 
+
         query = 'select * from allOrders order by date;'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['№ заказа', 'Компания', 'Дата', 'Статус', 'Цена']
         self.fillTable(self.ui.tableWidget,labels, result)
 
@@ -191,14 +258,14 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела со статистической задачей
         :return:
         '''
-
+        self.ui.widgControl.setVisible(False)
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
 
         self.ui.btnBack.clicked.connect(self.showOrders)
 
         query = 'select * from ShopAvrgOrderMonthly order by month;'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Заказчик', 'Месяц', 'Средняя сумма']
         self.fillTable(self.ui.tableWidget, labels, result)
 
@@ -207,14 +274,16 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с продуктами
         :return:
         '''
-
+        self.ui.widgControl.setVisible(True)
         self.ui.btnStatistic.disconnect()
         self.ui.btnStatistic.setVisible(True)
         self.ui.btnStatistic.setText('Топ продуктов')
         self.ui.btnStatistic.clicked.connect(self.showDemandedProduct)
 
+        self.currentSender = self.senders[3]
+
         query = 'select * from allProducts;'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Название', 'Цена', 'Информация']
         self.fillTable(self.ui.tableWidget,labels, result)
 
@@ -223,14 +292,14 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела со статистической задачей
         :return:
         '''
-
+        self.ui.widgControl.setVisible(False)
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
 
         self.ui.btnBack.clicked.connect(self.showProducts)
 
         query = 'select * from DemandedProductMonthly;'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Месяц', 'Продукт', 'Количество добавлений']
         self.fillTable(self.ui.tableWidget, labels, result)
 
@@ -239,10 +308,12 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с заказчиками
         :return:
         '''
+        self.currentSender = self.senders[2]
 
+        self.ui.widgControl.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
         query = 'select * from allCustomers;'
-        result = misc.selectFromBDWithConn(self.userRole, self.pasw, query)
+        result = misc.selectFromBD(self.cursor, query)
         labels = ['Компания', 'Телефон']
         self.fillTable(self.ui.tableWidget,labels, result)
 
@@ -273,7 +344,7 @@ class loginDialog(QtWidgets.QDialog):
         try:
 
             self.conn = misc.connect(userName, userPassw)
-            self.main = mainWindow(self, self.conn, userPassw)
+            self.main = mainWindow(self, self.conn)
 
             self.destroy()
             self.close()
@@ -300,9 +371,93 @@ class loginDialog(QtWidgets.QDialog):
         :return:
         '''
 
-        if self.conn != None : self.conn.close()
         self.destroy()
         self.close()
+
+
+class addDialog(QtWidgets.QDialog):
+
+    def __init__(self, conn, sender):
+        super(addDialog, self).__init__()
+        self.ui = AddUi_Dialog()
+        self.ui.setupUi(self)
+        self.setWindowTitle('Добавить')
+
+        widgets =  { 'customer' : self.ui.widgAddCustomer
+
+                   }
+
+        self.currentSender= sender
+
+        self.ui.btnCancel.clicked.connect(self.closeEvent)
+        self.ui.btnAdd.clicked.connect(self.addInfo)
+
+        widgets[sender].setVisible(True)
+
+        self.conn = conn
+
+    def addInfo(self):
+
+        query = ''
+
+        if self.currentSender == 'customer':
+
+            items = [self.ui.lineCompany, self.ui.linePhone]
+            info = self.getText(items)
+            pprint(info)
+
+            query = "Call CustomerInsert('{0}','{1}');".format(info[0], info[1]) if len(info)!=0 else 'error'
+
+        try:
+            if query == 'error' or query == '': raise Exception()
+            result = misc.transaction(self.conn, query)
+        except:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Неправильный запрос')
+            msg.setWindowTitle("Ошибка запроса")
+            msg.exec_()
+
+        self.close()
+
+    def getText(self, items):
+
+        info = []
+        try:
+            for item in items:
+                text = item.text()
+                info.append(text)
+                if text == '': raise Exception()
+
+        except:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Не все поля заполнены')
+            msg.setWindowTitle("Ошибка заполнения")
+            msg.exec_()
+
+        return info
+
+
+class delDialog(QtWidgets.QDialog):
+
+    def __init__(self, conn, sender, item):
+        super(delDialog, self).__init__()
+        self.ui = DelUi_Dialog()
+        self.ui.setupUi(self)
+        self.setWindowTitle('Удалить')
+
+        self.ui.labelInfo.setText('Удалить {0}?'.format(item[0]))
+
+        self.ui.btnNo.clicked.connected(self.closeEvent)
+        self.ui.btnYes.clicked.connected(self.deleteInfo)
+
+        self.conn = conn
+
+    def deleteInfo(self):
+       pass
 
 
 app = QtWidgets.QApplication([])
