@@ -242,7 +242,7 @@ $$ Language plpgsql;
 IngId - айди ингридиента
 ProdId - айди продукта
 */
-Create or Replace Procedure OHPDelete(ProdId int, OrdId int)
+Create or Replace Procedure OHPDelete(OrdId int, ProdId int)
 LANGUAGE sql
 as $$
  delete from OrdersHaveProduct where (ProdId = idProduct and OrdId =idOrder);

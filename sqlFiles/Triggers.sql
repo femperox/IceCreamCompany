@@ -138,10 +138,21 @@ execute procedure update_order_price1();
 */
 create or replace function remove_product()
 returns trigger as $$
+declare
+  OrderId int;
 Begin
     
+  select idOrder 
+	  into OrderId
+  from OrdersHaveProduct where old.id = idProduct;	
+	
   delete from ProductHasIngr where old.id = idProduct;
   delete from OrdersHaveProduct where old.id = idProduct;
+  
+  if (select count(idOrder) from OrdersHaveProduct where idOrder = OrderId) < 1 then
+  	delete from Orders where idOrder = OrderId;
+  end if;
+
   return old;
   
 End;
@@ -197,5 +208,7 @@ $$ LANGUAGE plpgsql;
 create trigger t_order_removal
 after delete on Orders for each row
 execute procedure remove_order();
+
+
 
 

@@ -4,7 +4,7 @@ insert into customer(Name, Phone) values
 ('Пятёрочка', '88005555505'),
 ('Перекрёсток', '+7(495)662-88-88'),
 ('Fix Price', '+7(495)902-50-00'),
-('О''КЕЙ', '78612739750');
+('ОКЕЙ', '78612739750');
 
 -- Ингридиенты
 insert into ingredient(Name, Price, Info) values
@@ -59,7 +59,6 @@ call orderinsert(4, cast(NOW() as date));
 call orderinsert(5, '2021-07-15');
 
 
-
 -- Продукты в заказах
 call OHPInsertUpdate(1, 1, 2);
 call OHPInsertUpdate(1, 2);
@@ -104,5 +103,3 @@ call OHPInsertUpdate(13, 1, 4);
 call OHPInsertUpdate(14, 2);
 call OHPInsertUpdate(14, 1);
 
-call OHPInsertUpdate(15, 2, 5);
-call OHPInsertUpdate(15, 1);

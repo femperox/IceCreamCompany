@@ -71,7 +71,7 @@ create or replace view DemandedProductMonthly as
 	  order by month, topProduct, productamount desc
      )
     select month, product, topProduct from TopProducts
-    where productamount = topproduct
+    where productamount = topproduct;
 	
 -- Определить топ 5 ингредиентов, встречающихся в заказах за последний месяц
 create or replace view Top5IngsMonthly as
@@ -98,7 +98,7 @@ create or replace view Top5IngsMonthly as
    		  limit (select count(distinct month) from TopIngred)
   		)
 	select * from ListOfTops
-	order by month
+	order by month;
  
 
 		  
