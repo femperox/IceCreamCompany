@@ -47,7 +47,8 @@ To OrderPicker;
 
 Grant Select
 On AllOrders,
-   AllProductsInOrder
+   AllProductsInOrder,
+   Customer
 To OrderPicker;
 
 Grant Usage, 
