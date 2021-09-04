@@ -29,6 +29,23 @@ as $$
 $$;
 
 /*
+Обновить ингридиент
+IngId - айди игридиента
+IngName - имя ингридиента
+IngPrice - стоимость ингридиента
+IngInfo - информация обингридиента
+*/
+Create or Replace Procedure IngUpdate(IngOldName varchar(45), IngNewName varchar(45), IngPrice decimal(100,2), IngInfo varchar(45) default '')
+LANGUAGE sql
+as $$
+ update Ingredient set 
+    Name = IngNewName, 
+    Price = IngPrice, 
+    Info = IngInfo
+ where IngOldName = name
+$$;
+
+/*
 Удалить ингридиент
 IngId - айди игридиента
 */
@@ -36,6 +53,16 @@ Create or Replace Procedure IngDelete(IngId int)
 LANGUAGE sql
 as $$
  delete from Ingredient where IngId = id;
+$$;
+
+/*
+Удалить ингридиент
+IngName - имя игридиента
+*/
+Create or Replace Procedure IngDelete(IngName text)
+LANGUAGE sql
+as $$
+ delete from Ingredient where IngName = name;
 $$;
 
 /*
@@ -66,6 +93,20 @@ as $$
 $$;
 
 /*
+Обновить продукт
+PrdName - имя продукта
+PrdInfo - информация о продукте
+*/
+Create or Replace Procedure ProductUpdate(PrdOldName varchar(45), PrdNewName varchar(45), PrdInfo varchar(45) default '')
+LANGUAGE sql
+as $$
+ update Product set 
+    Name = PrdNewName, 
+    Info = PrdInfo
+ where PrdOldName = name
+$$;
+
+/*
 Удалить продукт
 PrdId - айди продукта
 */
@@ -73,6 +114,16 @@ Create or Replace Procedure ProductDelete(PrdId int)
 LANGUAGE sql
 as $$
  delete from Product where PrdId = id;
+$$;
+
+/*
+Удалить продукт
+PrdName - имя продукта
+*/
+Create or Replace Procedure ProductDelete(PrdName text)
+LANGUAGE sql
+as $$
+ delete from Product where PrdName = name;
 $$;
 
 /*
@@ -103,6 +154,21 @@ as $$
 $$;
 
 /*
+Обновить покупателя
+CusName - имя покупателя
+CusPhone - телефон покупателя
+*/
+Create or Replace Procedure CustomerUpdate(CusNameOld varchar(45), CusNameNew varchar(45), CusPhone varchar(20))
+LANGUAGE sql
+as $$
+ update Customer set 
+    Name = CusNameNew, 
+    Phone = CusPhone
+ where CusNameOld = name
+$$;
+
+
+/*
 Удалить покупателя
 CusId - айди покупателя
 */
@@ -110,6 +176,16 @@ Create or Replace Procedure CustomerDelete(CusId int)
 LANGUAGE sql
 as $$
  delete from Customer where CusId = id;
+$$;
+
+/*
+Удалить покупателя
+CusName - имя покупателя покупателя
+*/
+Create or Replace Procedure CustomerDelete(CusName text)
+LANGUAGE sql
+as $$
+ delete from Customer where CusName = name;
 $$;
 
 /*
@@ -211,4 +287,7 @@ LANGUAGE sql
 as $$
  delete from Orders where OrdId = id;
 $$;
+
+
+select * from allingredients
 

@@ -50,6 +50,14 @@ On AllOrders,
    AllProductsInOrder
 To OrderPicker;
 
+Grant Usage, 
+      Select
+On orders_id_seq
+To OrderPicker;
 
+Grant Select
+On customer_id_seq,
+   product_id_seq
+To OrderPicker;
 
 
