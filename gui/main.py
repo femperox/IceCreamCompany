@@ -207,6 +207,8 @@ class mainWindow(QtWidgets.QMainWindow):
             self.showProducts()
         elif self.currentSender == self.senders[4]:
             self.showProducts()
+        else:
+            self.showOrders()
 
 
     def showOrderInfo(self, row, column):
@@ -223,6 +225,8 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui.btnStatistic.setVisible(False)
 
         self.currentSender = self.senders[5]
+
+        self.itemToUpdate = self.ui.tableWidget.item(row,0).text()
 
         query = 'select product, productAmount, price, totalPrice from allProductsInOrder where orderId = {0}'.format(id)
         result = misc.selectFromBD(self.cursor, query)
@@ -242,8 +246,6 @@ class mainWindow(QtWidgets.QMainWindow):
         query = "select id from Product where name = '{0}'".format(self.ui.tableWidget.item(row,0).text())
         result = misc.selectFromBD(self.cursor, query)
         self.itemToUpdate = result[0][0]
-
-
 
         query = "select ingredient, ingAmount, info from allIngsInProduct where product = '{0}'".format(name)
         result = misc.selectFromBD(self.cursor, query)
@@ -444,7 +446,8 @@ class addDialog(QtWidgets.QDialog):
                      'ing': self.ui.widgetAddIng,
                      'product': self.ui.widgetProduct,
                      'ingInPr': self.ui.widgetIngInPrd,
-                     'order': self.ui.widgetOrder
+                     'order': self.ui.widgetOrder,
+                     'prInOrd': self.ui.widgetPrdInOrd
                    }
 
         self.currentSender = sender
@@ -482,6 +485,13 @@ class addDialog(QtWidgets.QDialog):
             for state in ['not in stock', 'in stock', 'shipped', 'returned to warehouse', 'shipment cancellation']:
                 self.ui.comboBoxState.addItem(state)
 
+        elif self.currentSender == 'prInOrd':
+
+            query = 'select name from allProducts'
+            result = misc.selectFromBD(cur, query)
+
+            for item in result:
+              self.ui.comboBoxProd.addItem(str(item[0]))
 
         cur.close()
 
@@ -533,6 +543,20 @@ class addDialog(QtWidgets.QDialog):
             currentInfo = [result[0][0], info[1], info[2]]
 
             query = "Call OrderInsert({0},'{1}','{2}');".format(currentInfo[0], currentInfo[1], currentInfo[2])
+        elif self.currentSender == 'prInOrd':
+
+            items = [self.ui.comboBoxProd, self.ui.lineAmountProd]
+            info = self.getText(items)
+
+            cur = self.conn.cursor()
+            query = "select id from Product where name = '{0}'".format(info[0])
+            result = misc.selectFromBD(cur, query)
+            cur.close()
+
+            currentInfo = [self.itemId, result[0][0], info[1]]
+
+            query = "Call OHPInsertUpdate({0},{1},{2});".format(currentInfo[0], currentInfo[1], currentInfo[2])
+
 
 
         try:
@@ -611,6 +635,13 @@ class delDialog(QtWidgets.QDialog):
            result = misc.selectFromBD(cur, query)
 
            query = "Call PHIDelete({0}, {1});".format(self.parentItem, result[0][0])
+       elif self.currentSender == 'prInOrd':
+           cur = self.conn.cursor()
+           query = "select id from Product where name = '{0}'".format(self.item[0])
+           result = misc.selectFromBD(cur, query)
+
+           query = "Call OHPDelete({0}, {1});".format(self.parentItem, result[0][0])
+
 
        try:
            if query == 'error' or query == '': raise Exception()
@@ -645,8 +676,8 @@ class ediDialog(QtWidgets.QDialog):
                      'ing': self.ui.widgetAddIng,
                      'product': self.ui.widgetProduct,
                      'ingInPr': self.ui.widgetIngInPrd,
-                     'order': self.ui.widgetOrder
-
+                     'order': self.ui.widgetOrder,
+                     'prInOrd': self.ui.widgetPrdInOrd
                    }
 
         widgets[sender].setVisible(True)
@@ -680,17 +711,20 @@ class ediDialog(QtWidgets.QDialog):
             info = self.getText(items)
 
             query = "Call CustomerUpdate('{0}','{1}', '{2}');".format(self.item[0], info[0], info[1]) if len(info) != 0 else 'error'
+
         elif self.currentSender == 'ing':
 
             items = [self.ui.lineIngName, self.ui.lineIngPrice, self.ui.lineIngInfo]
             info = self.getText(items)
 
             query = "Call IngUpdate('{0}','{1}','{2}','{3}');".format(self.item[0], info[0], info[1], info[2]) if len(info)!=0 else 'error'
+
         elif self.currentSender == 'product':
             items = [self.ui.lineProdName, self.ui.lineProdInfo]
             info = self.getText(items)
 
             query = "Call ProductUpdate('{0}','{1}','{2}');".format(self.item[0], info[0], info[1]) if len(info) != 0 else 'error'
+
         elif self.currentSender == 'order':
             items = [self.ui.comboBoxCompany, self.ui.dateEdit, self.ui.comboBoxState]
             info = self.getText(items)
@@ -703,8 +737,6 @@ class ediDialog(QtWidgets.QDialog):
             currentInfo = [self.item[0], result[0][0], info[1], info[2]]
 
             query = "Call OrderUpdate({0},{1},'{2}','{3}');".format(currentInfo[0], currentInfo[1], currentInfo[2], currentInfo[3])
-
-
 
         elif self.currentSender == 'ingInPr':
 
@@ -724,6 +756,26 @@ class ediDialog(QtWidgets.QDialog):
             misc.transaction(self.conn, query)
 
             query = "Call PHIInsertUpdate({0},{1},{2});".format(currentInfo[0], currentInfo[1], currentInfo[2])
+
+        elif self.currentSender == 'prInOrd':
+
+            items = [self.ui.lineAmountProd]
+            info = self.getText(items)
+
+            cur = self.conn.cursor()
+
+            query = "select id from Product where name = '{0}'".format(self.item[0])
+            result = misc.selectFromBD(cur, query)
+
+            cur.close()
+
+            currentInfo = [self.parentItem, result[0][0], info[0]]
+
+            query = "Call OHPDelete({0}, {1});".format(currentInfo[0], currentInfo[1])
+            misc.transaction(self.conn, query)
+
+            query = "Call OHPInsertUpdate({0},{1},{2});".format(currentInfo[0], currentInfo[1], currentInfo[2])
+
 
         try:
             if query == 'error' or query == '': raise Exception()
