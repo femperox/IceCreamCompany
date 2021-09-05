@@ -39,6 +39,9 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui.btnBack.setVisible(False)
         self.ui.btnBack.clicked.connect(self.showOrders)
 
+        self.ui.btnStatistic2.setVisible(False)
+        self.ui.btnStatistic2.clicked.connect(self.showCanceledOrders)
+
         self.itemToUpdate = ''
 
         query = 'select session_user;'
@@ -218,6 +221,7 @@ class mainWindow(QtWidgets.QMainWindow):
         :param column: колонка
         :return:
         '''
+        self.ui.btnStatistic2.setVisible(False)
         id = self.ui.tableWidget.item(row,0).text()
         self.ui.btnBack.setVisible(True)
         self.ui.btnBack.disconnect()
@@ -258,6 +262,7 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с ингридиентами
         :return:
         '''
+        self.ui.btnStatistic2.setVisible(False)
         self.ui.widgControl.setVisible(True)
         self.ui.btnStatistic.disconnect()
         self.ui.btnStatistic.setVisible(True)
@@ -292,6 +297,7 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с заказами
         :return:
         '''
+        self.ui.btnStatistic2.setVisible(True)
         self.ui.widgControl.setVisible(True)
         self.ui.btnBack.setVisible(False)
         self.currentSender = self.senders[0]
@@ -314,6 +320,7 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела со статистической задачей
         :return:
         '''
+        self.ui.btnStatistic2.setVisible(False)
         self.ui.widgControl.setVisible(False)
         self.ui.btnBack.setVisible(True)
         self.ui.btnStatistic.setVisible(False)
@@ -330,9 +337,10 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с продуктами
         :return:
         '''
+        self.ui.btnStatistic2.setVisible(False)
         self.ui.widgControl.setVisible(True)
-        self.ui.btnStatistic.disconnect()
         self.ui.btnBack.setVisible(False)
+        self.ui.btnStatistic.disconnect()
         self.ui.btnStatistic.setVisible(True)
         self.ui.btnStatistic.setText('Топ продуктов')
         self.ui.btnStatistic.clicked.connect(self.showDemandedProduct)
@@ -367,14 +375,52 @@ class mainWindow(QtWidgets.QMainWindow):
         Подготовка отображения раздела с заказчиками
         :return:
         '''
+        self.ui.btnStatistic2.setVisible(False)
+        self.ui.btnStatistic.disconnect()
+        self.ui.btnStatistic.setVisible(True)
+        self.ui.btnStatistic.setText('Топ продуктов')
+        self.ui.btnStatistic.clicked.connect(self.showTopPrd)
+        self.ui.widgControl.setVisible(True)
+
         self.currentSender = self.senders[2]
 
-        self.ui.widgControl.setVisible(True)
-        self.ui.btnStatistic.setVisible(False)
         query = 'select * from allCustomers;'
         result = misc.selectFromBD(self.cursor, query)
         labels = ['Компания', 'Телефон']
         self.fillTable(self.ui.tableWidget,labels, result)
+
+    def showTopPrd(self):
+        '''
+        Подготовка отображения раздела со статистической задачей
+        :return:
+        '''
+        self.ui.widgControl.setVisible(False)
+        self.ui.btnBack.setVisible(True)
+        self.ui.btnStatistic.setVisible(False)
+
+        self.ui.btnBack.clicked.connect(self.showCustomers)
+
+        query = 'select * from TopCustomerForPrd'
+        result = misc.selectFromBD(self.cursor, query)
+        labels = ['Продукт', 'Топ магазинов за тек и пред. месяца']
+        self.fillTable(self.ui.tableWidget, labels, result)
+
+    def showCanceledOrders(self):
+        '''
+        Подготовка отображения раздела со статистической задачей
+        :return:
+        '''
+        self.ui.widgControl.setVisible(False)
+        self.ui.btnBack.setVisible(True)
+        self.ui.btnStatistic.setVisible(False)
+        self.ui.btnStatistic2.setVisible(False)
+
+        self.ui.btnBack.clicked.connect(self.showOrders)
+
+        query = 'select * from CanceledOrders'
+        result = misc.selectFromBD(self.cursor, query)
+        labels = ['Месяц', '№ заказа', 'Заказчик', 'Продукт', 'Кол-во', 'Цена продукта', 'Цена заказа']
+        self.fillTable(self.ui.tableWidget, labels, result)
 
 
 class loginDialog(QtWidgets.QDialog):

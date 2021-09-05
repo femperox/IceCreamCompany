@@ -15,6 +15,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
+        
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
@@ -40,6 +41,9 @@ class Ui_MainWindow(object):
         self.btnDelete = QtWidgets.QPushButton(self.widgControl)
         self.btnDelete.setGeometry(QtCore.QRect(160, 10, 71, 28))
         self.btnDelete.setObjectName("btnDelete")
+        self.btnStatistic2 = QtWidgets.QPushButton(self.centralwidget)
+        self.btnStatistic2.setGeometry(QtCore.QRect(660, 10, 131, 28))
+        self.btnStatistic2.setObjectName("btnStatistic2")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
@@ -66,6 +70,7 @@ class Ui_MainWindow(object):
         self.btnCreate.setText(_translate("MainWindow", "Добавить"))
         self.btnEdit.setText(_translate("MainWindow", "Изменить"))
         self.btnDelete.setText(_translate("MainWindow", "Удалить"))
+        self.btnStatistic2.setText(_translate("MainWindow", "Отменённые заказы"))
         self.Ings.setText(_translate("MainWindow", "Ингридиенты"))
         self.Products.setText(_translate("MainWindow", "Продукты"))
         self.Customers.setText(_translate("MainWindow", "Заказчики"))
