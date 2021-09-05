@@ -146,7 +146,21 @@ create or replace view TopCustomerForPrd as
    
 
 		  
--- Для каждого месяца вывести отменённые заказы, а также комплектацию их продуктов с промежуточными суммами стоимости заказа.		  
-		  
+-- Для каждого месяца вывести отменённые заказы, а также комплектацию их продуктов с промежуточными суммами стоимости заказа.
+create or replace view CanceledOrders as
+	select getMonth(allOrders.date) as month,
+	   id, 
+	   customer, 
+	   product,
+	   productAmount,
+	   allproductsinorder.price, 
+	   totalPrice,
+	   SUM(totalPrice) over ( partition by id
+							  order by product
+							) as totalOrderPrice
+	from allOrders
+	join allproductsinorder on allOrders.id = allproductsinorder.orderId
+	where status = 'shipment cancellation'
+	order by month, id
 		  
 		  

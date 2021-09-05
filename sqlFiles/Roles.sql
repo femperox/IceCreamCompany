@@ -26,9 +26,10 @@ On AllCustomers,
    DemandedProductMonthly,
    ShopAvrgOrderMonthly,
    Top5IngsMonthly,
-   TopCustomerForPrd
+   TopCustomerForPrd,
+   CanceledOrders
 To GenManager;
-select * from TopCustomerForPrd
+
 Grant Usage, 
       select
 On all sequences in schema public
@@ -52,6 +53,7 @@ Grant Select
 On AllOrders,
    AllProductsInOrder,
    AllProducts,
+   CanceledOrders,
    Customer,
    Product
 To OrderPicker;
@@ -65,5 +67,4 @@ Grant Select
 On customer_id_seq,
    product_id_seq,
 To OrderPicker;
-
 
