@@ -100,9 +100,53 @@ create or replace view Top5IngsMonthly as
 	select * from ListOfTops
 	order by month;
  
+-- Для каждого продукта необходимо узнать магазин, в который было отправлено наибольшее количество заказов с ним в текущем месяце, 
+-- а также предыдущем месяце
+create or replace view TopCustomerForPrd as
+   with CustomerPrdCount as
+   (select 
+   		customer, 
+		product, 
+		getMonth(allOrders.date) as month,
+		count(customer) Over( partition by getMonth(allOrders.date), customer, product
+							) as prdCount
+    from allorders
+    join allproductsinorder on allOrders.id = allproductsinorder.orderid 
+   ),
+   CustomerMaxPrdCount as
+   ( select distinct 
+   		  month, 
+   		  product,
+		  prdCount, 
+		  customer,
+		  max(prdCount) Over(partition by month, product) as maxPrdCount
+     from customerPrdCount 
+	 order by month, product, prdcount desc
+   ),
+   FirstCust as
+   ( select 
+   	 	product,
+	 	month,
+	 	customer,
+	 	prdCount,
+	 	maxPrdCount,
+	 	first_value(customer) over (partition by month
+									 order by maxPrdCount desc) as first_cust
+   	 from CustomerMaxPrdCount
+     where prdCount = maxPrdCount 
+     order by month
+   )
+   select 
+     product,
+	 STRING_AGG(month || ': ' || customer, ', ') over( partition by product
+													   order by month desc
+													   Rows between current row and 1 following
+											  		    )
+   from FirstCust where customer = first_cust;
+   
 
 		  
-		  
+-- Для каждого месяца вывести отменённые заказы, а также комплектацию их продуктов с промежуточными суммами стоимости заказа.		  
 		  
 		  
 		  
