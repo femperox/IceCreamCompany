@@ -15,31 +15,46 @@ declare
 Begin
     
   if TG_OP = 'INSERT' or TG_OP = 'UPDATE' then
-
-	 select price 
-	  into ingPrice
-	 from ingredient where new.idIngredient = id;
+     if exists( select * from ingredient where new.idIngredient = id ) then
+	 	select price 
+	 	  into ingPrice
+	 	from ingredient where new.idIngredient = id;
 	 
-     sum = new.ingAmount * 0.01 * ingPrice;
+     	sum = new.ingAmount * 0.01 * ingPrice;
 	
-     update Product set
-	    Price = Price + sum
-	 where new.idProduct = id;
+     	update Product set
+	    	Price = Price + sum
+	 	where new.idProduct = id;
+	 else
+	    delete from Product where new.idProduct = id;
+	 end if;
+	 
 	 RETURN New;
   else
-     select price 
-	  into ingPrice
-	 from ingredient where old.idIngredient = id;
+     
+	 if exists( select * from ingredient where old.idIngredient = id ) then
+	 	
+		select price 
+	 		 into ingPrice
+		from ingredient where old.idIngredient = id;
 	 
-  	 sum = old.ingAmount * 0.01 * ingPrice;
+  		sum = old.ingAmount * 0.01 * ingPrice;
     
-	 update Product set
-	    Price = Price - sum
-	 where old.idProduct = id;
+	 	update Product set
+		    Price = Price - sum
+	 	where old.idProduct = id;
+	 else
+	 
+	 	delete from Product where old.idProduct = id;
+	 
+	 end if;
+	 
 	 return old;
   end if;
 End;
 $$ LANGUAGE plpgsql;
+
+
 
 /*
 Триггер, реагирующий на добавление/изменение/удаление ингридиента в/из продукт/а
@@ -92,33 +107,44 @@ sum - переменная для посчёта итоговой суммы п�
 create or replace function update_order_price1()
 returns trigger as $$
 declare
-  prodPrice decimal(100,2);
+  prodPrice decimal(100,2) := 0;
   sum decimal(100,2);
 Begin
     
   if TG_OP = 'INSERT' or TG_OP = 'UPDATE' then
+     if exists( select * from product where new.idproduct = id ) then
+	 	select price 
+	  		into prodPrice
+	 	from product where new.idproduct = id;
 
-	 select price 
-	  into prodPrice
-	 from product where new.idproduct = id;
 	 
-     sum = new.productamount * prodPrice;
+     	sum = new.productamount * prodPrice;
+	 
 	
-     update Orders set
-	    Price = Price + sum
-	 where new.idorder = id;
-	
+     	update Orders set
+		    Price = Price + sum
+ 		where new.idorder = id;
+	 else
+	 	delete from Orders where new.idOrder = id;
+	 end if;
+	 
 	 RETURN New;
   else
-     select price 
-	  into prodPrice
-	 from product where old.idproduct = id;
+	 if exists( select * from product where old.idproduct = id ) then
+     	select price 
+	  		into prodPrice
+	 	from product where old.idproduct = id;
 	 
-  	 sum = old.productamount * prodPrice;
+  	 	sum = old.productamount * prodPrice;
     
-	 update Orders set
-	    Price = Price - sum
-	 where old.idorder = id;	
+	 	update Orders set
+		    Price = Price - sum
+	 	where old.idorder = id;	
+		
+	 else
+	 	delete from Orders where old.idOrder = id;
+	 end if;
+	 
 	 return old;
   end if;
 End;

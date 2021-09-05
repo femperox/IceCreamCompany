@@ -41,13 +41,16 @@ Create Role OrderPicker
 
 Grant Select,
 	  Insert,
-	  Update
-On Orders
+	  Update,
+	  Delete
+On Orders,
+   OrdersHaveProduct
 To OrderPicker;
 
 Grant Select
 On AllOrders,
    AllProductsInOrder,
+   AllProducts,
    Customer,
    Product
 To OrderPicker;
@@ -59,7 +62,7 @@ To OrderPicker;
 
 Grant Select
 On customer_id_seq,
-   product_id_seq
+   product_id_seq,
 To OrderPicker;
 
 
