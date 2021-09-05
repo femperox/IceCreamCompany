@@ -25,9 +25,10 @@ On AllCustomers,
    AllProductsInOrder,
    DemandedProductMonthly,
    ShopAvrgOrderMonthly,
-   Top5IngsMonthly
+   Top5IngsMonthly,
+   TopCustomerForPrd
 To GenManager;
-
+select * from TopCustomerForPrd
 Grant Usage, 
       select
 On all sequences in schema public
